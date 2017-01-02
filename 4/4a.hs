@@ -13,29 +13,22 @@ frequencies :: Ord a => [a] -> [(a,Int)]
 frequencies l = map (\x -> (head x, length x)) . L.group . L.sort $ l
 
 encrypt :: String -> String
-encrypt string = take 5 . map fst $ sorted
+encrypt string = take 5 . map fst $ concatenated
   where
     freqs = frequencies . filter isAlpha $ string
     sorted = L.sortOn snd $ freqs
+    grouped = L.groupBy (\x y -> (snd x) == snd y) sorted
+    concatenated = concat . reverse $ grouped
 
 isValidRoom :: (String, Int, String) -> Bool
 isValidRoom (name, id, checksum) = checksum == encrypt name
 
-getRoomName (name, _, _) = name
-getRoomChecksum (_, _, checksum) = checksum
-
-getRoomId :: (String, Int, String) -> Int
-getRoomId (_, id, _) = id
+snd3 :: (a, b, c) -> b
+snd3 (_, y, _) = y
 
 main = do
   rooms <- return . map parseRoom . lines =<< readFile "input"
-
-  let r = rooms !! 0
-
-  putStrLn $ encrypt . getRoomName $ r
-  putStrLn $ getRoomChecksum $ r
-  putStrLn $ show . L.maximumBy (comparing snd) . init . L.sortOn snd. frequencies . filter isAlpha $ getRoomName $ r
-
   let validRooms = filter isValidRoom rooms
-  putStrLn . show . sum . map getRoomId $ validRooms
+
+  putStrLn . show . sum . map snd3 $ validRooms
   putStrLn "done"
