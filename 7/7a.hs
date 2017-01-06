@@ -17,14 +17,18 @@ unhypers ip = case matchRegexAll regex ip of
   where
     regex = mkRegex "\\[[A-Za-z]*\\]"
 
-validateAbbas :: String -> Bool
-validateAbbas s = or $ map isAbba strings
+subseqs :: Int -> String -> [String]
+subseqs n s | n > length s = []
+subseqs n s = [take n s] ++ (subseqs n $ drop 1 s)
+
+validateAbba :: String -> Bool
+validateAbba s = or $ map isAbba strings
   where
-    strings = map (splitAt 2 . chunksOf 4) s
-    isAbba (xs,ys) = xs == reverse ys
+    strings = map (splitAt 2) . subseqs 4 $ s 
+    isAbba (xs,ys) = (xs == reverse ys) && (xs !! 0 /= xs !!1)
 
 validateTLS :: String -> Bool
-validateTLS s = and $ (map (not . validateAbbas) h) ++ (map validateAbbas u)
+validateTLS s = and (map (not . validateAbba) h) && or (map validateAbba u)
   where
     h = hypers s
     u = unhypers s
