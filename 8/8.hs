@@ -49,20 +49,18 @@ rectangle = do
 shiftRight :: Int -> [a] -> [a]
 shiftRight n xs = take (length xs) . drop (n * (length xs - 1)) . cycle $ xs
 
-shiftLeft :: Int -> [a] -> [a]
-shiftLeft n xs = zipWith const (drop n (cycle xs)) xs
-
 -- Perform a rotation
 rotate :: String -> Int -> Int -> [[Int]] -> [[Int]]
 rotate dir n k s = case dir of
   "row" -> perform shiftRight s
-  "column" -> transpose . perform shiftLeft . transpose $ s
+  "column" -> transpose . perform shiftRight . transpose $ s
   where
     perform sh xs = (take n xs) ++ [(sh k (xs !! n))] ++ (drop (n+1) xs)
 
 -- Draw a rectangle
 rectangulate :: Int -> Int -> [[Int]] -> [[Int]]
-rectangulate w h s = (replicate h ((replicate w (1::Int)) ++ (replicate (sw - w) (0::Int)))) ++ drop h s
+-- rectangulate w h s = (replicate h ((replicate w (1::Int)) ++ (replicate (sw - w) (0::Int)))) ++ drop h s
+rectangulate w h s = map (\row -> replicate w (1::Int) ++ (drop w row)) (take h s) ++ drop h s
 
 -- Parse an operation
 parseOperation :: String -> Operation
@@ -79,8 +77,9 @@ printScreen :: [[Int]] -> IO ()
 printScreen s = putStrLn $ unlines $ map (map (\c -> if c == 1 then '#' else '.')) s
 
 main = do
-  operations <- map parseOperation . lines <$> readFile "input"
+  operations <- reverse . map parseOperation . lines <$> readFile "input"
   let screen2 = foldr operate screen operations
   printScreen screen2
   putStrLn . show . sum . concat $ screen2
+
   putStrLn "done"
